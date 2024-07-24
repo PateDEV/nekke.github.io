@@ -41,7 +41,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             // Send confirmation email using PHPMailer
             $mail = new PHPMailer(true);
 
-            try {
+            try { 
                 // Server settings
                 $mail->SMTPDebug = 0; // Enable verbose debug output
                 $mail->isSMTP();
@@ -50,7 +50,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 $mail->Username = 'mail.srv.lat@gmail.com'; // SMTP username
                 $mail->Password = 'PateMouse22289'; // SMTP password or App Password
                 $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-                $mail->Port = 587;
+                $mail->Port = 465;
 
                 // Recipients
                 $mail->setFrom('mail.srv.lat@gmail.com', 'Mailer');
