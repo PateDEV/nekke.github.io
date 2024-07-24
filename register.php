@@ -1,9 +1,14 @@
 <?php
 session_start();
+require 'vendor/autoload.php'; // Include PHPMailer autoload file
+
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
+
 $servername = "localhost";
 $username = "root";  // Change this to your database username
 $password = "";      // Change this to your database password
-$dbname = "login"; // Change this to your database name
+$dbname = "login";   // Change this to your database name
 
 $conn = new mysqli($servername, $username, $password, $dbname);
 
@@ -26,21 +31,41 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     if ($result->num_rows > 0) {
         $error_message = "Username or email already exists.";
     } else {
+        // Hash the password before storing it
+        $hashed_password = password_hash($pass, PASSWORD_BCRYPT);
+
         // Insert new user with token
         $stmt = $conn->prepare("INSERT INTO users (username, password, email, token) VALUES (?, ?, ?, ?)");
-        $stmt->bind_param("ssss", $user, $pass, $email, $token);
+        $stmt->bind_param("ssss", $user, $hashed_password, $email, $token);
         if ($stmt->execute()) {
-            // Send confirmation email
-            $to = $email;
-            $subject = "Email Verification";
-            $message = "Click the link below to verify your email address:\n\n";
-            $message .= "76534528+PateDEV@users.noreply.github.com/confirm.php?token={$token}";
-            $headers = "no-reply@infraronkx.eu";
+            // Send confirmation email using PHPMailer
+            $mail = new PHPMailer(true);
 
-            if (mail($to, $subject, $message, $headers)) {
+            try {
+                // Server settings
+                $mail->SMTPDebug = 0; // Enable verbose debug output
+                $mail->isSMTP();
+                $mail->Host = 'smtp.gmail.com'; // Set the SMTP server to send through
+                $mail->SMTPAuth = true;
+                $mail->Username = 'mail.srv.lat@gmail.com'; // SMTP username
+                $mail->Password = 'PateMouse22289'; // SMTP password or App Password
+                $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+                $mail->Port = 587;
+
+                // Recipients
+                $mail->setFrom('mail.srv.lat@gmail.com', 'Mailer');
+                $mail->addAddress($email); // Add a recipient
+
+                // Content
+                $mail->isHTML(true);
+                $mail->Subject = 'Email Verification';
+                $mail->Body    = 'Click the link below to verify your email address:<br><br>';
+                $mail->Body   .= "<a href='https://patedev.github.io/nekke.github.io/confirm.php?token={$token}'>Verify Email</a>";
+
+                $mail->send();
                 $success_message = "Registration successful! A confirmation email has been sent to $email.";
-            } else {
-                $error_message = "Failed to send confirmation email.";
+            } catch (Exception $e) {
+                $error_message = "Failed to send confirmation email. Mailer Error: {$mail->ErrorInfo}";
             }
         } else {
             $error_message = "Registration failed. Please try again.";
@@ -52,6 +77,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
 $conn->close();
 ?>
+
 <!doctype html>
 <html lang="en"> 
 <head> 
